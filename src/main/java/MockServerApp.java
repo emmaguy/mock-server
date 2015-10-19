@@ -2,19 +2,44 @@ import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
 
+import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
 class MockServerApp {
     private static final String HEADER_CONTENT_TYPE = "Content-Type";
     private static final String HEADER_JSON = "application/json; charset=utf-8";
 
+    private static final String PARAM_IP_ADDRESS = "i";
+    private static final String PARAM_PORT = "p";
+    private static final String PARAM_QUEUED_RESPONSES = "q";
+
     public static void main(final String[] args) throws Exception {
-        final boolean enqueueResponses = args.length > 0 && args[0].equals("e");
+        final OptionParser parser = new OptionParser() {
+            {
+                accepts(PARAM_IP_ADDRESS).withRequiredArg().ofType(String.class)
+                        .describedAs("ip address to bind to and start the mock server on");
+                accepts(PARAM_PORT).withRequiredArg().ofType(Integer.class)
+                        .describedAs("port to start the mock server on");
+                accepts(PARAM_QUEUED_RESPONSES).withOptionalArg().ofType(Boolean.class)
+                        .describedAs("use queued responses, if false uses dispatcher").defaultsTo(false);
+            }
+        };
+
+        final OptionSet commandLineOptions = parser.parse(args);
+        if (!commandLineOptions.hasOptions()) {
+            parser.printHelpOn(System.out);
+            return;
+        }
+
+        final String ipAddress = (String) commandLineOptions.valueOf(PARAM_IP_ADDRESS);
+        final Integer port = (Integer) commandLineOptions.valueOf(PARAM_PORT);
+        final Boolean useQueuedResponses = (Boolean) commandLineOptions.valueOf(PARAM_QUEUED_RESPONSES);
 
         final MockWebServer server = new MockWebServer();
-
-        if (enqueueResponses) {
+        if (useQueuedResponses) {
             System.out.println("Queuing up responses");
             enqueueResponses(server);
         } else {
@@ -22,7 +47,7 @@ class MockServerApp {
             useDispatcher(server);
         }
 
-        server.start();
+        server.start(InetAddress.getByAddress(new IpParser(ipAddress).toByteArray()), port);
 
         System.out.println("Mock server running at: " + server.url(""));
     }
@@ -44,6 +69,8 @@ class MockServerApp {
 
             @Override
             public MockResponse dispatch(final RecordedRequest request) throws InterruptedException {
+                System.out.println("Request: " + request.getPath() + " '" + request + "'");
+
                 if (request.getPath().equals("/v1")) {
                     return new MockResponse().setResponseCode(404);
                 }

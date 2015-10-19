@@ -8,6 +8,7 @@ repositories {
 }
 
 dependencies {
+    compile 'net.sf.jopt-simple:jopt-simple:4.9'
     compile 'com.squareup.okhttp:mockwebserver:2.5.0'
 }
 

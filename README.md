@@ -5,10 +5,24 @@ Trying out Square's [Mock Web Server](https://github.com/square/okhttp/tree/mast
 
 Run with your favourite IDE directly, or by making a jar.
 
-You can make the jar with an included gradle task, then start the mock server like this:
+Make the jar with the included gradle task:
 
-`java -jar build/libs/mock-server.jar`
+`./gradlew jar`
 
+Then start the mock server like this:
+
+`java -jar build/libs/mock-server.jar -i 10.1.34.165 -p 50444`
+
+Run with the following command line options:
+
+`
+Option                                 Description
+------                                 -----------
+-i <ip address to bind to and start
+  the mock server on>
+-p <port to start the mock server on>
+-q [Boolean: (default: false) use queued responses, if false uses dispatcher]
+`
 
 `Ctrl+C` to stop it
 
